@@ -1,0 +1,7 @@
+cmake_minimum_required(VERSION 3.0)
+project(navajo CXX)
+set(CMAKE_SHARED_LIBRARY_LINK_CXX_FLAGS)
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall -Wextra -Wpedantic -Werror -O3 -fwhole-program -fno-asynchronous-unwind-tables -fno-exceptions -fno-rtti -fno-ident -Wl,--gc-sections,--strip-all,--build-id=none")
+file(GLOB HEADERS *.hpp)
+file(GLOB SOURCES *.cpp)
+add_executable(${PROJECT_NAME} ${HEADERS} ${SOURCES})
