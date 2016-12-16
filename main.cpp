@@ -9,8 +9,8 @@ extern "C" {
 #include <arpa/inet.h>
 #include <dirent.h>
 #include <fcntl.h>
-#include <sys/stat.h>
 #include <sys/socket.h>
+#include <sys/stat.h>
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <unistd.h>
@@ -185,9 +185,11 @@ static void process_connection(int connection_socket) {
         if (connection_socket == -1) {
             printf("accept() failed: %d\n", errno);
         } else {
-            buffer.resize(read(connection_socket,
-                               &buffer[0],
-                               BUFFER_SIZE - 1));
+            buffer.resize(
+                read(
+                    connection_socket,
+                    &buffer[0],
+                    BUFFER_SIZE - 1));
             printf("%s", &(buffer + "\0")[0]);
             std::string resource = parse_request(buffer) + "\0";
             if (resource == "\0") {
@@ -202,7 +204,6 @@ static void process_connection(int connection_socket) {
             if (write(connection_socket, &message[0], message.size()) == -1) {
                 printf("write() failed: %d\n", errno);
             }
-            close(connection_socket);
         }
         close(listen_socket);
         exit(0);
@@ -240,25 +241,26 @@ int main(int argc, char *argv[]) {
     server_address.sin_family = AF_INET;
     server_address.sin_port = htons(port);
     server_address.sin_addr.s_addr = htonl(INADDR_ANY);
-    if (bind(listen_socket,
-             (struct sockaddr *) &server_address,
-             sizeof(server_address)) == -1) {
+    if (bind(
+            listen_socket,
+            (struct sockaddr *) &server_address,
+            sizeof(server_address)) == -1) {
         printf("bind() failed: %d\n", errno);
         return 1;
     }
     listen(listen_socket, 1);
     printf("Server started on port %d\n\n", port);
     signal(SIGINT, termination_handler);
+    signal(SIGTERM, termination_handler);
     for (;;) {
         waitpid(-1, NULL, WNOHANG);
-        int connection_socket;
         socklen_t client_address_length;
         struct sockaddr_in client_address;
         client_address_length = sizeof(client_address);
-        connection_socket = accept(listen_socket,
-                                   (struct sockaddr *)&client_address,
-                                   &client_address_length);
+        int connection_socket = accept(
+            listen_socket,
+            (struct sockaddr *) &client_address,
+            &client_address_length);
         process_connection(connection_socket);
-        close(connection_socket);
     }
 }
