@@ -1,0 +1,25 @@
+#!/usr/bin/python3
+
+import sys
+import html
+import cgi
+
+sys.stdout = open(sys.stdout.fileno(), mode='w', encoding='utf8', buffering=1)
+form = cgi.FieldStorage()
+data = html.escape(form.getfirst('data', ''))
+
+print('''\
+Content-Type: text/html
+
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Receive</title>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    </head>
+    <body>
+        data: ''', data, '''
+    </body>
+</html>
+''', sep='', end='')

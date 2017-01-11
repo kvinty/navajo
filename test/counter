@@ -1,0 +1,29 @@
+#!/usr/bin/python3
+
+try:
+    fr = open('data', 'r')
+    count = int(fr.read())
+    fr.close()
+except FileNotFoundError:
+    count = 0
+count += 1
+fw = open('data', 'w')
+print(count, file=fw)
+fw.close()
+
+print('''\
+Content-Type: text/html
+
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Counter</title>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta http-equiv="refresh" content="1">
+    </head>
+    <body>
+        ''', count, '''
+    </body>
+</html>
+''', sep='', end='')

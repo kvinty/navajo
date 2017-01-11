@@ -1,0 +1,33 @@
+#!/usr/bin/python3
+
+import os
+
+print('''\
+Content-Type: text/html
+
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Variables</title>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    </head>
+    <body>
+        <ul>
+''',
+
+''.join('''\
+            <li>
+                \
+'''
++ i[0] + '=' + i[1] +
+'''
+            </li>
+'''
+for i in sorted(dict(os.environ).items())),
+
+'''\
+        </ul>
+    </body>
+</html>
+''', sep='', end='')

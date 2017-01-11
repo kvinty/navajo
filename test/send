@@ -1,0 +1,21 @@
+#!/usr/bin/python3
+
+print('''\
+Content-Type: text/html
+
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Send</title>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    </head>
+    <body>
+        <form method="get" action="receive">
+            <input type="text" name="data">
+            <br>
+            <input type="submit" name="button" value="Send">
+        </form>
+    </body>
+</html>
+''', sep='', end='')
