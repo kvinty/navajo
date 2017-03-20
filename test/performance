@@ -1,0 +1,13 @@
+#!/bin/sh
+
+TESTS=2500
+
+START=`date +%s`
+for i in `seq 1 $TESTS`
+do
+    curl localhost > /dev/null 2>&1
+done
+END=`date +%s`
+
+TIME=$(($END-$START))
+echo "Result: " $TIME

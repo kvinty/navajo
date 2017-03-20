@@ -7,7 +7,9 @@ extern "C" {
 #include <unistd.h>
 }
 
+#include <algorithm>
 #include <unordered_map>
+#include <vector>
 
 #include "answer_generator.hpp"
 
@@ -68,6 +70,10 @@ void from_file(
     uint16_t port,
     const std::string &query) {
     struct stat info;
+    if (access(file_name.c_str(), R_OK)) {
+        generate_error(answer, 403, "");
+        return;
+    }
     stat(file_name.c_str(), &info);
     if (info.st_mode & S_IXUSR) {
         std::string s0, s1, s2, s3, s4, s5;
@@ -109,6 +115,10 @@ void from_file(
 void generate_listing(
     std::string &answer,
     const std::string &directory) {
+    if (access(directory.c_str(), R_OK)) {
+        generate_error(answer, 403, "");
+        return;
+    }
     DIR *dir;
     struct dirent *entry;
     std::string page =
@@ -116,9 +126,14 @@ void generate_listing(
         "    <body>\n"
         "        <h1>Directory listing</h1>\n"
         "        <ul>\n";
+    std::vector<std::string> files;
     if ((dir = opendir(directory.c_str())) != nullptr) {
         while ((entry = readdir(dir)) != nullptr) {
             std::string file = entry->d_name;
+            files.push_back(file);
+        }
+        std::sort(files.begin(), files.end());
+        for (std::string &file : files) {
             if (file_type(directory + file) == STAT::DIRECTORY) {
                 file += "/";
             }
