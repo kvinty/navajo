@@ -1,3 +1,7 @@
+#include <algorithm>
+#include <unordered_map>
+#include <vector>
+
 extern "C" {
 #include <dirent.h>
 #include <fcntl.h>
@@ -7,25 +11,24 @@ extern "C" {
 #include <unistd.h>
 }
 
-#include <algorithm>
-#include <unordered_map>
-#include <vector>
-
+#include "common.hpp"
+#include "url_encoder.hpp"
+#include "query_parser.hpp"
 #include "answer_generator.hpp"
 
-const std::string NAME = "navajo/0.2.0";
+static const std::string NAME = PROJECT_NAME "/" PROJECT_VERSION;
 
-const std::string HTML_HEAD =
+static const std::string HTML_HEAD =
     "<!DOCTYPE html>\n"
     "<html>\n"
     "    <head>\n"
-    "        <title>navajo</title>\n"
+    "        <title>" PROJECT_NAME "</title>\n"
     "        <meta charset=\"utf-8\">\n"
     "        <meta name=\"viewport\" content=\"width=device-width, initial-sca\
 le=1.0\">\n"
     "    </head>\n";
 
-const std::unordered_map<int, std::string> error_codes = {
+static const std::unordered_map<int, std::string> error_codes = {
     {200, "OK"},
     {301, "Moved Permanently"},
     {400, "Bad Request"},
@@ -40,7 +43,8 @@ std::string header(
     int code,
     const std::string &record,
     const std::string &type,
-    size_t size) {
+    size_t size
+) {
     return
         "HTTP/1.1 " + std::to_string(code) + " " + error_codes.at(code) + "\n"
         "Server: " + NAME + "\n"
@@ -50,10 +54,7 @@ std::string header(
         "Connection: close\n\n";
 }
 
-void generate_error(
-    std::string &answer,
-    int code,
-    const std::string &record) {
+std::string generate_error(int code, const std::string &record) {
     std::string page =
         HTML_HEAD +
         "    <body>\n"
@@ -61,18 +62,18 @@ void generate_error(
         "        <h3>Error code: " + std::to_string(code) + "</h3>\n"
         "    </body>\n"
         "</html>\n";
-    answer = header(code, record, "text/html", page.size()) + page;
+    return header(code, record, "text/html", page.size()) + page;
 }
 
-void from_file(
-    std::string &answer,
+std::string from_file(
     const std::string &file_name,
     uint16_t port,
-    const std::string &query) {
+    const std::string &query,
+    const std::string &chroot
+) {
     struct stat info;
     if (access(file_name.c_str(), R_OK)) {
-        generate_error(answer, 403, "");
-        return;
+        return generate_error(403, "");
     }
     stat(file_name.c_str(), &info);
     if (info.st_mode & S_IXUSR) {
@@ -90,14 +91,18 @@ void from_file(
             (s5 = ("QUERY_STRING=" + query)).c_str(),
             nullptr
         };
-        std::string message = get_output(file_name, envp);
+        std::string message = get_output(file_name, envp, chroot);
         size_t newline = message.find("\n\n");
         std::string content_type = message.substr(0, newline), a, b;
         if (parse_field(content_type, a, b)) {
-            answer = header(200, "", b, message.size() - newline - 2) +
-                     message.substr(newline + 2);
+            return header(
+                200,
+                "",
+                b,
+                message.size() - newline - 2
+            ) + message.substr(newline + 2);
         } else {
-            generate_error(answer, 500, "");
+            return generate_error(500, "");
         }
     } else {
         size_t length = info.st_size;
@@ -105,19 +110,15 @@ void from_file(
         std::string content;
         content.resize(length);
         if (read(file, &content[0], length) == -1) {
-            printf("read() failed: %d\n", errno);
+            return generate_error(500, "");
         }
-        answer = header(200, "", determine_mime(file_name), length)
-        + content;
+        return header(200, "", determine_mime(file_name), length) + content;
     }
 }
 
-void generate_listing(
-    std::string &answer,
-    const std::string &directory) {
+std::string generate_listing(const std::string &directory) {
     if (access(directory.c_str(), R_OK)) {
-        generate_error(answer, 403, "");
-        return;
+        return generate_error(403, "");
     }
     DIR *dir;
     struct dirent *entry;
@@ -140,19 +141,18 @@ void generate_listing(
             if (file != "./" && file != "../") {
                 page +=
                     "            <li>\n"
-                    "                <a href=" + file + ">" + file +
+                    "                <a href=" + url_encode(file) + ">" + file +
                     "</a>\n"
                     "            </li>\n";
             }
         }
         closedir(dir);
     } else {
-        generate_error(page, 403, "");
-        return;
+        return generate_error(403, "");
     }
     page +=
         "        </ul>\n"
         "    </body>\n"
         "</html>\n";
-    answer = header(200, "", "text/html", page.size()) + page;
+    return header(200, "", "text/html", page.size()) + page;
 }

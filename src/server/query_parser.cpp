@@ -1,7 +1,11 @@
+#include <vector>
+
+#include "common.hpp"
+#include "url_encoder.hpp"
 #include "query_parser.hpp"
 
-void split(const std::string &str, std::vector<std::string> &parts) {
-    parts = {};
+static std::vector<std::string> split(const std::string &str) {
+    std::vector<std::string> parts;
     size_t start = 0, finish, size = str.size();
     for (;;) {
         while (start != str.size() && isspace(str[start])) {
@@ -17,6 +21,7 @@ void split(const std::string &str, std::vector<std::string> &parts) {
         parts.push_back(str.substr(start, finish - start));
         start = finish;
     }
+    return parts;
 }
 
 bool parse_method(
@@ -24,9 +29,9 @@ bool parse_method(
     std::string &method,
     std::string &version,
     std::string &resource,
-    std::string &query) {
-    std::vector<std::string> parts;
-    split(input, parts);
+    std::string &query
+) {
+    std::vector<std::string> parts = split(input);
     if (parts.size() != 3) {
         return false;
     }
@@ -35,11 +40,12 @@ bool parse_method(
         return false;
     }
     size_t question_mark = parts[1].find('?');
-    resource = parts[1].substr(1, question_mark - 1);
+    resource = url_decode(parts[1].substr(1, question_mark - 1));
     if (question_mark != std::string::npos) {
         query = parts[1].substr(
             question_mark + 1,
-            parts[1].size() - question_mark - 1);
+            parts[1].size() - question_mark - 1
+        );
     } else {
         query = "";
     }
@@ -51,12 +57,8 @@ bool parse_method(
     return true;
 }
 
-bool parse_field(
-    const std::string &input,
-    std::string &a,
-    std::string &b) {
-    std::vector<std::string> parts;
-    split(input, parts);
+bool parse_field(const std::string &input, std::string &a, std::string &b) {
+    std::vector<std::string> parts = split(input);
     if (parts.size() >= 2 && parts[0][parts[0].size() - 1] == ':') {
         parts[0].pop_back();
         a = parts[0];

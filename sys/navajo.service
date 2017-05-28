@@ -1,0 +1,10 @@
+[Unit]
+Description=Simple and lightweight web server
+
+[Service]
+ExecStart=/usr/bin/navajo /etc/navajo.conf
+User=navajo
+Group=navajo
+
+[Install]
+WantedBy=multi-user.target

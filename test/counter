@@ -1,13 +1,14 @@
 #!/usr/bin/python3
 
 try:
-    fr = open('data', 'r')
+    fr = open('/tmp/data', 'r')
     count = int(fr.read())
     fr.close()
 except FileNotFoundError:
     count = 0
+
 count += 1
-fw = open('data', 'w')
+fw = open('/tmp/data', 'w')
 print(count, file=fw)
 fw.close()
 
